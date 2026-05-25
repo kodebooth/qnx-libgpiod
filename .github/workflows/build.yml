@@ -1,0 +1,32 @@
+# Copyright (c) 2026 Abe Kohandel
+# SPDX-License-Identifier: MIT
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+name: "ci"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64le]
+    container:
+      image: ghcr.io/kodebooth/libgpiod:0.0.1
+    steps:
+      - uses: actions/checkout@v6
+      - run: |
+          . /opt/qnx800/qnx-sdp.sh
+          meson setup --cross-file cross-nto${{ matrix.arch }}.ini build -Dtests=disabled -Dc_args="-DMAX=max -DMIN=min"
+          meson compile -C build
