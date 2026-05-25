@@ -35,7 +35,7 @@ static int all_chip_paths(char ***paths_ptr)
 	struct dirent **entries;
 	char **paths;
 
-	num_chips = scandir("/dev/", &entries, chip_dir_filter, versionsort);
+	num_chips = scandir("/dev/", &entries, chip_dir_filter, alphasort);
 	if (num_chips < 0)
 		return 0;
 
