@@ -11,7 +11,7 @@
 #ifndef _UAPI_GPIO_H_
 #define _UAPI_GPIO_H_
 
-#include <linux/ioctl.h>
+#include <sys/ioctl.h>
 #include <stdint.h>
 
 /*
