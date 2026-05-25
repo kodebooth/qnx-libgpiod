@@ -27,6 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: |
-          . /opt/qnx800/qnx-sdp.sh
+          qnx_sdp_dir="${QNX_SDP_INSTALL_DIR:-/opt/qnx800}"
+
+          if [ -f "${qnx_sdp_dir}/qnxsdp-env.sh" ]; then
+            . "${qnx_sdp_dir}/qnxsdp-env.sh"
+          elif [ -f "${qnx_sdp_dir}/qnx-sdp.sh" ]; then
+            . "${qnx_sdp_dir}/qnx-sdp.sh"
+          else
+            echo "QNX environment script not found in ${qnx_sdp_dir}" >&2
+            exit 1
+          fi
+
           meson setup --cross-file cross-nto${{ matrix.arch }}.ini build -Dtests=disabled -Dc_args="-DMAX=max -DMIN=min"
           meson compile -C build
