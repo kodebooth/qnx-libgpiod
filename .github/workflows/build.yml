@@ -27,6 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - run: |
+          set -e
           apt-get update
           apt-get install -y --no-install-recommends meson
           . /opt/qnx800/qnx-sdp.sh
