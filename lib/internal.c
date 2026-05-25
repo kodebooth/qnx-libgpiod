@@ -17,7 +17,7 @@
 
 bool gpiod_check_gpiochip_device(const char *path, bool set_errno)
 {
-	char *realname, *sysfsp, devpath[64];
+	char *realname;
 	struct stat statbuf;
 	bool ret = false;
 	int rv;
@@ -50,30 +50,8 @@ bool gpiod_check_gpiochip_device(const char *path, bool set_errno)
 		goto out_free_realname;
 	}
 
-	/* Is the device associated with the GPIO subsystem? */
-	snprintf(devpath, sizeof(devpath), "/sys/dev/char/%u:%u/subsystem",
-		 major(statbuf.st_rdev), minor(statbuf.st_rdev));
-
-	sysfsp = realpath(devpath, NULL);
-	if (!sysfsp)
-		goto out_free_realname;
-
-	/*
-	 * In glibc, if any of the underlying readlink() calls fail (which is
-	 * perfectly normal when resolving paths), errno is not cleared.
-	 */
-	errno = 0;
-
-	if (strcmp(sysfsp, "/sys/bus/gpio") != 0) {
-		/* This is a character device but not the one we're after. */
-		errno = ENODEV;
-		goto out_free_sysfsp;
-	}
-
 	ret = true;
 
-out_free_sysfsp:
-	free(sysfsp);
 out_free_realname:
 	free(realname);
 out:
