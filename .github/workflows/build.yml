@@ -1,0 +1,57 @@
+# Copyright (c) 2026 Abe Kohandel
+# SPDX-License-Identifier: MIT
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+      - releases/*
+
+name: "ci"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64le]
+    container:
+      image: ghcr.io/kodebooth/qnx-libgpiod:latest
+    steps:
+      - uses: actions/checkout@v6
+      # github.workspace and GITHUB_WORKSPACE are not the same value when running inside a container so use the following workaround
+      # See https://github.com/actions/runner/issues/2058
+      - run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+      - if: ${{ matrix.arch == 'x86_64' }}
+        run: |
+          echo "HOST=x86_64-pc-nto-qnx8.0" >> $GITHUB_ENV
+      - if: ${{ matrix.arch == 'aarch64le' }}
+        run: |
+          echo "HOST=aarch64-unknown-nto-qnx8" >> $GITHUB_ENV
+      - run: |
+          source /opt/qnx800/qnxsdp-env.sh
+          ./autogen.sh
+          ac_cv_func_malloc_0_nonnull=yes ./configure --host=${{ env.HOST }} CFLAGS="-DMIN=min -DMAX=max" CC="qcc -Vgcc_nto${{ matrix.arch }}" --enable-tools --prefix=/usr
+          make -j
+          make install DESTDIR=${{ env.GITHUB_WORKSPACE }}/install/libgpiod/${{ matrix.arch }}
+      - run: |
+          tar -czvf nto${{ matrix.arch }}-libgpiod.tar.gz -C ${{ env.GITHUB_WORKSPACE }}/install/libgpiod .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nto${{ matrix.arch }}-libgpiod
+          path: nto${{ matrix.arch }}-libgpiod.tar.gz
+          archive: false
+          if-no-files-found: error
