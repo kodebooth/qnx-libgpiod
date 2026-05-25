@@ -23,10 +23,12 @@ jobs:
       matrix:
         arch: [x86_64, aarch64le]
     container:
-      image: ghcr.io/kodebooth/libgpiod:0.0.1
+      image: ghcr.io/kodebooth/qnx-sdp:latest
     steps:
       - uses: actions/checkout@v6
       - run: |
+          apt-get update
+          apt-get install -y --no-install-recommends meson
           . /opt/qnx800/qnx-sdp.sh
           meson setup --cross-file cross-nto${{ matrix.arch }}.ini build -Dtests=disabled -Dc_args="-DMAX=max -DMIN=min"
           meson compile -C build
